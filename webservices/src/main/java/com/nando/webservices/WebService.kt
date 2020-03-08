@@ -8,38 +8,38 @@ import com.android.volley.toolbox.Volley
 import org.json.JSONArray
 import org.json.JSONObject
 
-class WebService(private val context: Context) {
+class WebService(protected val context: Context, private val TAG: String = "") {
 
     var executable: Executable? = null
 
     fun get(url: String, params: MutableMap<String, String>? = null, headers: MutableMap<String, String>? = null): Executable {
-        executable = Executable(context, Request.Method.GET, url, params, headers)
+        executable = Executable(this, Request.Method.GET, url, params, headers)
         return executable!!
     }
 
     fun post(url: String, params: MutableMap<String, String>? = null, headers: MutableMap<String, String>? = null): Executable {
-        executable = Executable(context, Request.Method.POST, url, params, headers)
+        executable = Executable(this, Request.Method.POST, url, params, headers)
         return executable!!
     }
 
     fun put(url: String, params: MutableMap<String, String>? = null, headers: MutableMap<String, String>? = null): Executable {
-        executable = Executable(context, Request.Method.PUT, url, params, headers)
+        executable = Executable(this, Request.Method.PUT, url, params, headers)
         return executable!!
     }
 
     fun patch(url: String, params: MutableMap<String, String>? = null, headers: MutableMap<String, String>? = null): Executable {
-        executable = Executable(context, Request.Method.PATCH, url, params, headers)
+        executable = Executable(this, Request.Method.PATCH, url, params, headers)
         return executable!!
     }
 
     fun delete(url: String, params: MutableMap<String, String>? = null, headers: MutableMap<String, String>? = null): Executable {
-        executable = Executable(context, Request.Method.DELETE, url, params, headers)
+        executable = Executable(this, Request.Method.DELETE, url, params, headers)
         return executable!!
     }
 
-    class Executable(context: Context, val method: Int, var url: String, var params: MutableMap<String, String>? = null, var headers: MutableMap<String, String>? = null) {
+    class Executable(private val webService: WebService, val method: Int, var url: String, var params: MutableMap<String, String>? = null, var headers: MutableMap<String, String>? = null) {
 
-        private val queue: RequestQueue = Volley.newRequestQueue(context)
+        private val queue: RequestQueue = Volley.newRequestQueue(webService.context)
         private val res = MutableResponse()
         private var request: StringRequest? = null
 
@@ -49,13 +49,11 @@ class WebService(private val context: Context) {
                 override fun getHeaders(): MutableMap<String, String> = this@Executable.params ?: super.getHeaders()
 
                 override fun parseNetworkResponse(response: NetworkResponse?): Response<String> {
-                    Log.d("WebServices", "HERE 1")
                     res.apply {
                         statusCode = response?.statusCode
                         networkTimeMs = response?.networkTimeMs
                         isSuccessful = true
                     }
-                    Log.d("WebServices", "res -> $res")
                     return super.parseNetworkResponse(response)
                 }
 
@@ -97,7 +95,6 @@ class WebService(private val context: Context) {
 
         fun fetchString(callback: (StringResponse) -> Unit)  {
             fun onSuccess(it: String) {
-                Log.d("WebServices", "Success -> $it")
                 with(res) {
                     callback(StringResponse(it, statusCode, networkTimeMs, isSuccessful, cause, message, localizedMessage))
                 }
@@ -116,12 +113,11 @@ class WebService(private val context: Context) {
 
         fun fetchJsonObject(callback: (JsonObjectResponse) -> Unit)  {
             fun onSuccess(it: String) {
-                Log.d("WebServices", "Success -> $it")
                 var data: JSONObject? = null
                 try {
                     data = JSONObject(it)
                 } catch (ex: Exception) {
-                    Log.d("WebServices", "Failed to parse string response to JSON array")
+                    webService.debug( "Failed to parse string response to JSON array")
                 }
                 with(res) {
                     callback(JsonObjectResponse(data, statusCode, networkTimeMs, isSuccessful, cause, message, localizedMessage))
@@ -145,7 +141,7 @@ class WebService(private val context: Context) {
                 try {
                     data = JSONArray(it)
                 } catch (ex: Exception) {
-                    Log.d("WebServices", "Failed to parse string response to JSON array")
+                    webService.debug("Failed to parse string response to JSON array")
                 }
                 with(res) {
                     callback(JsonArrayResponse(data, statusCode, networkTimeMs, isSuccessful, cause, message, localizedMessage))
@@ -166,9 +162,10 @@ class WebService(private val context: Context) {
         fun cancel() {
             request?.run {
                 cancel()
-                Log.d("WebServices", "Request canceled")
             }
+            webService.debug("Request canceled")
         }
+
     }
 
     private open class MutableResponse {
@@ -178,14 +175,13 @@ class WebService(private val context: Context) {
         var cause: Throwable? = null
         var message: String? = null
         var localizedMessage: String? = null
+    }
 
-
-        override fun toString(): String {
-            return "statusCode -> ${statusCode?: "null"}, networkTimeMs -> ${networkTimeMs?: "null"}, isSuccessful -> $isSuccessful"
+    private fun debug(message: String) {
+        if (GlobalConfig.debug) {
+            Log.d("WebServices", "$TAG $message")
         }
     }
 
-    data class StringResponse(val data: String?, val statusCode: Int?, val networkTimeMs: Long?, val isSuccessful: Boolean?, val cause: Throwable?, val message: String?, val localizedMessage: String?)
-    data class JsonObjectResponse(val data: JSONObject?, val statusCode: Int?, val networkTimeMs: Long?, val isSuccessful: Boolean, val cause: Throwable?, val message: String?, val localizedMessage: String?)
-    data class JsonArrayResponse(val data: JSONArray?, val statusCode: Int?, val networkTimeMs: Long?, val isSuccessful: Boolean?, val cause: Throwable?, val message: String?, val localizedMessage: String?)
 }
+

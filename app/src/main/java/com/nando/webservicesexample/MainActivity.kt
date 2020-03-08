@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
 
         val params: MutableMap<String, String> = mutableMapOf()
         params["page"] = "2"
-        val request = WebService(this).get(url, params)
+        val request = WebService(this).post(url, params)
 
         request.fetchJsonObject {
             Log.d("WebServices", "statusCode -> ${it.statusCode}")
