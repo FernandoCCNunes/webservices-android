@@ -45,8 +45,15 @@ class WebService(protected val context: Context, private val TAG: String = "") {
 
         private fun getRequest(onSuccess: (String) -> Unit, onError: (VolleyError) -> Unit): StringRequest {
             return object: StringRequest(method, url, { onSuccess(it) }, { onError(it) }) {
-                override fun getParams(): MutableMap<String, String> = this@Executable.params ?: super.getParams()
-                override fun getHeaders(): MutableMap<String, String> = this@Executable.params ?: super.getHeaders()
+                override fun getParams(): MutableMap<String, String>  {
+                    this@Executable.webService.debug("params -> ${this@Executable.params ?: super.getParams()}")
+                    return this@Executable.params ?: super.getParams()
+                }
+
+                override fun getHeaders(): MutableMap<String, String> {
+                    this@Executable.webService.debug("headers -> ${this@Executable.headers ?: super.getHeaders()}")
+                    return this@Executable.headers ?: super.getHeaders()
+                }
 
                 override fun parseNetworkResponse(response: NetworkResponse?): Response<String> {
                     res.apply {
@@ -111,7 +118,7 @@ class WebService(protected val context: Context, private val TAG: String = "") {
             addExtraOptions()
         }
 
-        fun fetchJsonObject(callback: (JsonObjectResponse) -> Unit)  {
+        fun fetchJsonObject(callback: (JsonObjectResponse) -> Unit) {
             fun onSuccess(it: String) {
                 var data: JSONObject? = null
                 try {
@@ -178,7 +185,7 @@ class WebService(protected val context: Context, private val TAG: String = "") {
     }
 
     private fun debug(message: String) {
-        if (GlobalConfig.debug) {
+        if (WebServicesConfig.debug) {
             Log.d("WebServices", "$TAG $message")
         }
     }

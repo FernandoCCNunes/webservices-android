@@ -1,5 +1,5 @@
 package com.nando.webservices
 
-object GlobalConfig {
+object WebServicesConfig {
     var debug = false
 }
