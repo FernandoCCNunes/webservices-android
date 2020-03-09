@@ -47,7 +47,7 @@ class WebService(protected val context: Context, private val TAG: String = "") {
             return object: StringRequest(method, url, { onSuccess(it) }, { onError(it) }) {
                 override fun getParams(): MutableMap<String, String>  {
                     this@Executable.webService.debug("params -> ${this@Executable.params ?: super.getParams()}")
-                    return this@Executable.params ?: super.getParams()
+                    return this@Executable.params ?: super.getParams()?: mutableMapOf()
                 }
 
                 override fun getHeaders(): MutableMap<String, String> {
