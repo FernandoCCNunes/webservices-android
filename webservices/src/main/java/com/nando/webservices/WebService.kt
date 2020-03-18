@@ -3,10 +3,14 @@ package com.nando.webservices
 import android.content.Context
 import android.util.Log
 import com.android.volley.*
+import com.android.volley.toolbox.HttpHeaderParser
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.UnsupportedEncodingException
+import java.nio.charset.Charset
+import java.nio.charset.CharsetDecoder
 
 class WebService(protected val context: Context, private val TAG: String = "") {
 
@@ -51,7 +55,6 @@ class WebService(protected val context: Context, private val TAG: String = "") {
                 }
 
                 override fun getHeaders(): MutableMap<String, String> {
-                    this@Executable.webService.debug("headers -> ${this@Executable.headers ?: super.getHeaders()}")
                     return this@Executable.headers ?: super.getHeaders()
                 }
 
@@ -61,7 +64,12 @@ class WebService(protected val context: Context, private val TAG: String = "") {
                         networkTimeMs = response?.networkTimeMs
                         isSuccessful = true
                     }
-                    return super.parseNetworkResponse(response)
+
+                    val parsed: String = try { String(response!!.data, Charset.defaultCharset())
+                    } catch (e: UnsupportedEncodingException) {
+                        String(response!!.data)
+                    }
+                    return Response.success(parsed, HttpHeaderParser.parseCacheHeaders(response))
                 }
 
                 override fun parseNetworkError(volleyError: VolleyError?): VolleyError {
